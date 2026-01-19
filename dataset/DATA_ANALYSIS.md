@@ -5,17 +5,20 @@
 
 ---
 
-## 타겟 클래스 (7개)
+## 타겟 클래스 (8개)
 
 | ID | 클래스명 | 설명 | 객체 수 | 비율 |
 |----|----------|------|---------|------|
-| 0 | Helmet_OFF | 헬멧 미착용 | 9,128 | 8.4% |
-| 1 | Helmet_ON | 헬멧 착용 | 18,647 | 17.1% |
-| 2 | Vest_OFF | 안전조끼 미착용 | 10,183 | 9.3% |
-| 3 | Vest_ON | 안전조끼 착용 | 16,768 | 15.4% |
-| 4 | fire | 화재/불꽃 | 30,097 | 27.6% |
-| 5 | smoke | 연기 | 11,616 | 10.7% |
-| 6 | fall | 쓰러짐/넘어짐 | 12,494 | 11.5% |
+| 0 | Helmet_OFF | 헬멧 미착용 | 9,128 | 6.6% |
+| 1 | Helmet_ON | 헬멧 착용 | 18,647 | 13.5% |
+| 2 | Vest_OFF | 안전조끼 미착용 | 10,183 | 7.4% |
+| 3 | Vest_ON | 안전조끼 착용 | 16,768 | 12.1% |
+| 4 | fire | 화재/불꽃 | 30,097 | 21.8% |
+| 5 | smoke | 연기 | 11,616 | 8.4% |
+| 6 | fall | 쓰러짐/넘어짐 | 14,804 | 10.7% |
+| 7 | person | 정상 자세 (서있음/앉음/걸음) | 29,108 | 21.0% |
+
+**총 객체 수: 140,351개**
 
 ---
 
@@ -23,44 +26,33 @@
 
 | Split | 이미지 수 | 비율 |
 |-------|-----------|------|
-| Train | 48,294 | 84.9% |
-| Valid | 5,606 | 9.8% |
-| Test | 3,018 | 5.3% |
-| **Total** | **56,918** | 100% |
-
-**총 객체 수: 108,933개** (이미지당 평균 1.91개)
+| Train | 55,319 | 86.0% |
+| Valid | 5,873 | 9.1% |
+| Test | 3,110 | 4.8% |
+| **Total** | **64,302** | 100% |
 
 ---
 
-## 사용된 원본 데이터셋
+## 클래스 설계 원칙
 
-### PPE 데이터셋 (7개)
+### PPE (0-3): ON/OFF 쌍으로 학습
+```
+Helmet_OFF ↔ Helmet_ON  (같은 영역에서 있음/없음)
+Vest_OFF ↔ Vest_ON      (같은 영역에서 있음/없음)
+→ ON을 알아야 OFF를 정확히 구분
+```
 
-| 데이터셋 | 원본 이미지 | 샘플링 | Helmet | Vest | 비고 |
-|----------|-------------|--------|--------|------|------|
-| construction safety.v2 | 1,206 | 100% | ✓ | ✓ | 헬멧+조끼 모두 포함 |
-| ppe_only_700 | 1,077 | 100% | ✓ | ✓ | 4클래스 완전 라벨링 |
-| ppe_vest_13k | 14,809 | 30% | - | ✓ | 조끼만 (대용량) |
-| Safety vest.v3i | 6,710 | 30% | - | ✓ | 조끼만 |
-| PPE-0.3.v1i.yolo26 | 8,725 | 50% | ✓ | ✓ | 16클래스 중 4개 사용 |
-| Hard hat.v1i.yolo26 | 14,544 | 30% | ✓ | - | 헬멧만 (대용량) |
-| PPE.v14-allinone.yolo26 | 4,067 | 100% | ✓ | ✓ | 9클래스 중 4개 사용 |
+### Fire (4-5): 위험 상황 자체가 탐지 대상
+```
+fire, smoke → 있으면 탐지, 없으면 정상
+→ 별도 정상 클래스 불필요
+```
 
-### Fire 데이터셋 (3개)
-
-| 데이터셋 | 원본 이미지 | 샘플링 | fire | smoke | 비고 |
-|----------|-------------|--------|------|-------|------|
-| fire.v2i.yolo26 | 4,504 | 100% | ✓ | ✓ | 기본 화재 데이터 |
-| Fire.v2i.yolo26 (1) | 4,504 | 100% | ✓ | ✓ | 추가 화재 데이터 |
-| Fire-Final.v1-mitesh.yolo26 | 28,937 | 50% | ✓ | ✓ | 대용량 (PDPU 제외) |
-
-### Fall 데이터셋 (3개)
-
-| 데이터셋 | 원본 이미지 | 샘플링 | 원본 클래스 | 비고 |
-|----------|-------------|--------|-------------|------|
-| Fall.v1i.yolo26 | ~4,000 | 100% | down(1) | 쓰러진 상태 |
-| fall.v2i.yolo26 | ~4,000 | 100% | fall(0) | 넘어지는 동작 |
-| fall.v4i.yolo26 | ~4,000 | 100% | falling(0) | 넘어지는 동작 |
+### Fall (6-7): 정상/비정상 자세 구분
+```
+fall ↔ person  (같은 "사람"의 다른 상태)
+→ 정상 자세(person)를 알아야 비정상(fall)을 구분
+```
 
 ---
 
@@ -68,82 +60,73 @@
 
 ### PPE 매핑
 ```
-# construction safety.v2-release.yolo26_helmet_no-helmet_no-vest_vest_person
-helmet(0) → Helmet_ON(1)
-no-helmet(1) → Helmet_OFF(0)
-no-vest(2) → Vest_OFF(2)
-vest(4) → Vest_ON(3)
-# person(3) 제외
+# construction safety.v2
+helmet(0) → Helmet_ON(1), no-helmet(1) → Helmet_OFF(0)
+no-vest(2) → Vest_OFF(2), vest(4) → Vest_ON(3)
 
 # ppe_only_700
-Hard_Hat_OFF(0) → Helmet_OFF(0)
-Hard_Hat_ON(1) → Helmet_ON(1)
-Safety_Vest_OFF(2) → Vest_OFF(2)
-Safety_Vest_ON(3) → Vest_ON(3)
+Hard_Hat_OFF(0) → Helmet_OFF(0), Hard_Hat_ON(1) → Helmet_ON(1)
+Safety_Vest_OFF(2) → Vest_OFF(2), Safety_Vest_ON(3) → Vest_ON(3)
 
 # ppe_vest_13k
-no_safety_vest(0) → Vest_OFF(2)
-safety_vest(1) → Vest_ON(3)
+no_safety_vest(0) → Vest_OFF(2), safety_vest(1) → Vest_ON(3)
 
-# Safety vest.v3i.yolo26_vest_no-vest_6k
-NO-Safety Vest(0) → Vest_OFF(2)
-Safety Vest(1) → Vest_ON(3)
-
-# PPE-0.3.v1i.yolo26 (16클래스 중 4개만 사용)
-Helmet(3) → Helmet_ON(1)
-Without Helmet(12) → Helmet_OFF(0)
-Vest(8) → Vest_ON(3)
-Without Vest(15) → Vest_OFF(2)
+# PPE-0.3.v1i.yolo26
+Helmet(3) → Helmet_ON(1), Without Helmet(12) → Helmet_OFF(0)
+Vest(8) → Vest_ON(3), Without Vest(15) → Vest_OFF(2)
 
 # Hard hat.v1i.yolo26
-0 hard hat(0) → Helmet_ON(1)
-1 no(1) → Helmet_OFF(0)
+0 hard hat(0) → Helmet_ON(1), 1 no(1) → Helmet_OFF(0)
 
-# PPE.v14-allinone.yolo26 (9클래스 중 4개만 사용)
-hardhat(2) → Helmet_ON(1)
-no_hardhat(5) → Helmet_OFF(0)
-vest(8) → Vest_ON(3)
-no_vest(6) → Vest_OFF(2)
+# PPE.v14-allinone.yolo26
+hardhat(2) → Helmet_ON(1), no_hardhat(5) → Helmet_OFF(0)
+vest(8) → Vest_ON(3), no_vest(6) → Vest_OFF(2)
 ```
 
 ### Fire 매핑
 ```
-# fire.v2i.yolo26
-fire(0) → fire(4)
-smoke(1) → smoke(5)
+# fire.v2i.yolo26 / Fire.v2i.yolo26 (1)
+fire(0) → fire(4), smoke(1) → smoke(5)
 
-# Fire.v2i.yolo26 (1)
-fire(0) → fire(4)
-smoke(1) → smoke(5)
-
-# Fire-Final.v1-mitesh.yolo26 (3클래스 중 2개만 사용)
-fire(1) → fire(4)
-smoke(2) → smoke(5)
-# PDPU(0) 제외
+# Fire-Final.v1-mitesh.yolo26
+fire(1) → fire(4), smoke(2) → smoke(5)
+# PDPU(0) 제외 (의미 불명)
 ```
 
-### Fall 매핑
+### Fall 매핑 (v2 - person 클래스 추가)
 ```
-# Fall.v1i.yolo26 (3클래스 중 1개만 사용)
+# Fall.v1i.yolo26
 down(1) → fall(6)
-# 10-(0), person(2) 제외
+person(2) → person(7)
+# 10-(0) 제외 (의미 불명)
 
-# fall.v2i.yolo26 (3클래스 중 1개만 사용)
+# fall.v2i.yolo26
 fall(0) → fall(6)
-# sit(1), walk(2) 제외
+sit(1) → person(7)
+walk(2) → person(7)
 
-# fall.v4i.yolo26 (6클래스 중 1개만 사용)
+# fall.v4i.yolo26
 falling(0) → fall(6)
-# sitting(1), sleeping(2), standing(3), walking(4), waving hands(5) 제외
+sleeping(2) → fall(6)  ← 누워있는 상태는 위험으로 간주
+sitting(1) → person(7)
+standing(3) → person(7)
+walking(4) → person(7)
+# waving hands(5) 제외 (소량, 관련 없음)
 ```
 
 ---
 
 ## 학습 방법
 
-### 필수 요구사항
-- **YOLOE 모델** + **YOLOEPETrainer** 사용 필수
-- 세그멘테이션 사전학습 가중치 (`*-seg.pt`) 사용
+### 실행 명령어
+```bash
+cd C:/task/yoloe
+python train_unified.py                    # 기본 (yoloe-26m, 100 epochs)
+python train_unified.py --model yoloe-26s  # 작은 모델
+python train_unified.py --model yoloe-26l  # 큰 모델
+python train_unified.py --epochs 200       # 에폭 변경
+python train_unified.py --batch 8          # 배치 크기 조정
+```
 
 ### 사용 가능한 모델
 | 모델 | 파라미터 | 권장 용도 |
@@ -154,31 +137,37 @@ falling(0) → fall(6)
 | yoloe-26l | ~43M | 고성능 서버 |
 | yoloe-26x | ~68M | 최고 정확도 |
 
-### 실행 명령어
-```bash
-cd C:/task/yoloe
-python train_unified.py                    # 기본 (yoloe-26m, 100 epochs)
-python train_unified.py --model yoloe-26s  # 작은 모델
-python train_unified.py --model yoloe-26l  # 큰 모델
-python train_unified.py --epochs 200       # 에폭 변경
-python train_unified.py --batch 8          # 배치 크기 조정 (GPU 메모리 부족 시)
+---
+
+## 실제 서비스 적용
+
+### 알림 발생 조건 (추론 시 필터링)
+```python
+# 위험 상황만 알림
+ALERT_CLASSES = {
+    0: "헬멧 미착용 감지",
+    2: "안전조끼 미착용 감지",
+    4: "화재 감지",
+    5: "연기 감지 (화재 주의)",
+    6: "쓰러짐 감지",
+}
+
+# 학습에는 사용하지만 알림 안 함
+# 1: Helmet_ON, 3: Vest_ON, 7: person
 ```
 
-### 학습 설정 (기본값)
+### 추론 예시
 ```python
-{
-    "epochs": 100,
-    "batch": 16,
-    "imgsz": 640,
-    "optimizer": "AdamW",
-    "lr0": 0.001,
-    "lrf": 0.01,
-    "weight_decay": 0.0005,
-    "warmup_epochs": 3,
-    "patience": 30,        # Early stopping
-    "mosaic": 1.0,
-    "mixup": 0.1,
-}
+from ultralytics import YOLOE
+
+model = YOLOE("runs/unified/best.pt")
+results = model.predict("image.jpg", conf=0.5)
+
+for box in results[0].boxes:
+    cls = int(box.cls)
+    if cls in [0, 2, 4, 5, 6]:  # 위험 클래스만
+        # 알림 발생
+        pass
 ```
 
 ---
@@ -187,98 +176,18 @@ python train_unified.py --batch 8          # 배치 크기 조정 (GPU 메모리
 
 ```
 C:/task/yoloe/
-├── train_unified.py                  # ⭐ 통합 학습 스크립트
-├── train_fire_yoloe.py               # Fire 전용 학습 (선택)
-├── train_vest.py                     # Vest 전용 학습 (참고용)
-│
-├── models/                           # 사전학습 가중치
-│   ├── yoloe-26n-seg.pt
-│   ├── yoloe-26s-seg.pt
-│   ├── yoloe-26m-seg.pt
-│   ├── yoloe-26l-seg.pt
-│   └── yoloe-26x-seg.pt
-│
+├── train_unified.py                  # 통합 학습 스크립트
 ├── dataset/
 │   ├── DATA_ANALYSIS.md              # 이 문서
-│   ├── build_unified_all_dataset.py  # 통합 데이터셋 생성 스크립트
-│   ├── build_fire_dataset.py         # Fire 데이터셋 생성 스크립트
-│   │
-│   ├── unified_all/                  # ⭐ 통합 데이터셋 (PPE + Fire + Fall)
-│   │   ├── data.yaml
-│   │   ├── train/images/ (48,294장)
-│   │   ├── train/labels/
-│   │   ├── valid/images/ (5,606장)
-│   │   ├── valid/labels/
-│   │   ├── test/images/ (3,018장)
-│   │   └── test/labels/
-│   │
-│   ├── fire_smoke_unified/           # Fire 전용 데이터셋
-│   │
-│   └── [원본 데이터셋들]/
-│       ├── construction safety.v2.../
-│       ├── ppe_only_700.../
-│       ├── ppe_vest_13k/
-│       ├── Safety vest.v3i.../
-│       ├── PPE-0.3.v1i.yolo26/
-│       ├── Hard hat.v1i.yolo26/
-│       ├── PPE.v14-allinone.yolo26/
-│       ├── fire.v2i.yolo26/
-│       ├── Fire.v2i.yolo26 (1)/
-│       ├── Fire-Final.v1-mitesh.yolo26/
-│       ├── Fall.v1i.yolo26/
-│       ├── fall.v2i.yolo26/
-│       └── fall.v4i.yolo26/
-│
-└── runs/                             # 학습 결과 저장
-    └── unified/
-        └── yoloe-26m_e100_b16/
-            ├── weights/
-            │   ├── best.pt           # 최고 성능 모델
-            │   └── last.pt           # 마지막 체크포인트
-            └── [학습 로그 및 그래프]
+│   ├── build_unified_all_dataset.py  # 데이터셋 생성 스크립트
+│   └── unified_all/                  # 통합 데이터셋
+│       ├── data.yaml
+│       ├── train/ (55,319장)
+│       ├── valid/ (5,873장)
+│       └── test/ (3,110장)
+└── models/                           # 사전학습 가중치
+    └── yoloe-26*-seg.pt
 ```
-
----
-
-## 클래스 균형 분석
-
-| 카테고리 | 클래스 | 객체 수 | 전체 비율 | 카테고리 내 비율 |
-|----------|--------|---------|-----------|------------------|
-| **PPE** | Helmet_OFF | 9,128 | 8.4% | 16.7% |
-| **PPE** | Helmet_ON | 18,647 | 17.1% | 34.1% |
-| **PPE** | Vest_OFF | 10,183 | 9.3% | 18.6% |
-| **PPE** | Vest_ON | 16,768 | 15.4% | 30.6% |
-| | **PPE 소계** | **54,726** | **50.2%** | 100% |
-| **Fire** | fire | 30,097 | 27.6% | 72.2% |
-| **Fire** | smoke | 11,616 | 10.7% | 27.8% |
-| | **Fire 소계** | **41,713** | **38.3%** | 100% |
-| **Fall** | fall | 12,494 | 11.5% | 100% |
-| | **Fall 소계** | **12,494** | **11.5%** | 100% |
-
-**총계: 108,933개 객체**
-
-### 클래스 불균형 참고사항
-- `fire` 클래스가 가장 많음 (27.6%) - Fire-Final 데이터셋이 대용량
-- `Helmet_OFF`가 가장 적음 (8.4%) - 실제 현장에서 미착용이 적음
-- 학습 시 class weight 조정 또는 focal loss 고려 가능
-
----
-
-## 데이터셋 재생성
-
-통합 데이터셋을 다시 생성해야 할 경우:
-
-```bash
-cd C:/task/yoloe/dataset
-python build_unified_all_dataset.py
-```
-
-이 스크립트는:
-1. 모든 원본 데이터셋에서 이미지와 라벨 수집
-2. 클래스 ID를 통합 ID(0-6)로 매핑
-3. 샘플링 비율 적용 (대용량 데이터셋)
-4. train/valid/test 폴더로 분류
-5. data.yaml 자동 생성
 
 ---
 
@@ -286,30 +195,9 @@ python build_unified_all_dataset.py
 
 | 항목 | 값 |
 |------|-----|
-| 문서 생성일 | 2025-01-19 |
+| 버전 | v2 (person 클래스 추가) |
 | 최종 업데이트 | 2025-01-19 |
-| 이미지 총 수 | 56,918장 |
-| 객체 총 수 | 108,933개 |
-| 클래스 수 | 7개 |
-| 학습 모델 | YOLOE (yoloe-26n/s/m/l/x) |
-| 학습 방식 | YOLOEPETrainer + 세그멘테이션 가중치 |
-
----
-
-## 예상 결과물
-
-학습 완료 후 생성되는 파일:
-- `runs/unified/[실험명]/weights/best.pt` - 최고 성능 모델
-- `runs/unified/[실험명]/weights/last.pt` - 마지막 체크포인트
-
-### 추론 사용 예시
-```python
-from ultralytics import YOLOE
-
-model = YOLOE("runs/unified/yoloe-26m_e100_b16/weights/best.pt")
-results = model.predict("image.jpg", conf=0.5)
-
-# 클래스명
-# 0: Helmet_OFF, 1: Helmet_ON, 2: Vest_OFF, 3: Vest_ON
-# 4: fire, 5: smoke, 6: fall
-```
+| 이미지 총 수 | 64,302장 |
+| 객체 총 수 | 140,351개 |
+| 클래스 수 | 8개 |
+| 학습 모델 | YOLOE + YOLOEPETrainer |

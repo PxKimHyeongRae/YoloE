@@ -1,7 +1,10 @@
 """
 PPE + Fire + Fall 전체 통합 데이터셋 생성 스크립트
-- 7개 클래스:
-  0: Helmet_OFF, 1: Helmet_ON, 2: Vest_OFF, 3: Vest_ON, 4: fire, 5: smoke, 6: fall
+- 8개 클래스:
+  0: Helmet_OFF, 1: Helmet_ON, 2: Vest_OFF, 3: Vest_ON
+  4: fire, 5: smoke
+  6: fall (down, fall, falling, sleeping)
+  7: person (person, standing, walking, sitting)
 """
 
 import os
@@ -77,20 +80,29 @@ FIRE_CLASS_MAPPINGS = {
 }
 
 # ============================================================
-# Fall 데이터셋 클래스 매핑 (6)
+# Fall 데이터셋 클래스 매핑 (6: fall, 7: person)
 # ============================================================
 FALL_CLASS_MAPPINGS = {
     "Fall.v1i.yolo26": {
         # 원본: 10-(0), down(1), person(2)
         1: 6,   # down → fall
+        2: 7,   # person → person
+        # 0: 10- 제외 (의미 불명)
     },
     "fall.v2i.yolo26": {
         # 원본: fall(0), sit(1), walk(2)
         0: 6,   # fall → fall
+        1: 7,   # sit → person
+        2: 7,   # walk → person
     },
     "fall.v4i.yolo26": {
-        # 원본: falling(0), sitting(1), sleeping(2), standing(3), wallking(4), waving hands(5)
+        # 원본: falling(0), sitting(1), sleeping(2), standing(3), walking(4), waving hands(5)
         0: 6,   # falling → fall
+        1: 7,   # sitting → person
+        2: 6,   # sleeping → fall (누워있는 상태는 위험)
+        3: 7,   # standing → person
+        4: 7,   # walking → person
+        # 5: waving hands 제외 (소량, 관련 없음)
     },
 }
 
@@ -197,8 +209,8 @@ train: ./train/images
 val: ./valid/images
 test: ./test/images
 
-nc: 7
-names: ['Helmet_OFF', 'Helmet_ON', 'Vest_OFF', 'Vest_ON', 'fire', 'smoke', 'fall']
+nc: 8
+names: ['Helmet_OFF', 'Helmet_ON', 'Vest_OFF', 'Vest_ON', 'fire', 'smoke', 'fall', 'person']
 
 # Class description:
 # 0: Helmet_OFF - 헬멧 미착용
@@ -207,7 +219,8 @@ names: ['Helmet_OFF', 'Helmet_ON', 'Vest_OFF', 'Vest_ON', 'fire', 'smoke', 'fall
 # 3: Vest_ON - 안전조끼 착용
 # 4: fire - 화재/불꽃
 # 5: smoke - 연기
-# 6: fall - 쓰러짐/넘어짐
+# 6: fall - 쓰러짐/넘어짐 (down, fall, falling, sleeping)
+# 7: person - 정상 자세 (person, standing, walking, sitting)
 """
     with open(OUTPUT_DIR / "data.yaml", 'w', encoding='utf-8') as f:
         f.write(yaml_content)
@@ -266,7 +279,7 @@ def main():
     print(f"Total: {total} images")
     print()
     print("클래스별 객체 수:")
-    class_names = ['Helmet_OFF', 'Helmet_ON', 'Vest_OFF', 'Vest_ON', 'fire', 'smoke', 'fall']
+    class_names = ['Helmet_OFF', 'Helmet_ON', 'Vest_OFF', 'Vest_ON', 'fire', 'smoke', 'fall', 'person']
     for i, name in enumerate(class_names):
         print(f"  [{i}] {name}: {total_stats[f'class_{i}']}")
     print()
