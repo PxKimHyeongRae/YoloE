@@ -48,3 +48,11 @@ Thumbs.db
 task_plan.md
 progress.md
 findings.md
+
+# Verification output
+label_verification/
+dataset_quality_check/
+
+# Misc
+nul
+*.zip
