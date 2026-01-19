@@ -1,0 +1,50 @@
+# Dataset - Large image files (exclude all raw datasets)
+dataset/*
+
+# Keep only scripts and documentation
+!dataset/DATA_ANALYSIS.md
+!dataset/build_unified_all_dataset.py
+!dataset/build_fire_dataset.py
+
+# Model weights
+*.pt
+*.pth
+*.onnx
+*.ts
+models/
+
+# Training results
+runs/
+results/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Claude
+.claude/
+
+# Temporary files
+*.tmp
+*.log
+upload_package/
+reference_images/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Task planning files (optional)
+task_plan.md
+progress.md
+findings.md
