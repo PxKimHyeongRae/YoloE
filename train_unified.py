@@ -1,19 +1,18 @@
 """
-YOLOE 통합 모델 파인튜닝 스크립트 (PPE + Fire + Fall)
+YOLOE 통합 모델 파인튜닝 스크립트 (Helmet + Fire + Fall)
 
 사용법:
     python train_unified.py                       # 기본 설정으로 학습
-    python train_unified.py --model yoloe-26s     # 다른 모델 사용
-    python train_unified.py --epochs 200          # 에폭 변경
+    python train_unified.py --model yoloe-26l     # 다른 모델 사용
+    python train_unified.py --epochs 150          # 에폭 변경
 
-클래스 (7개):
+클래스 (6개):
     0: Helmet_OFF (헬멧 미착용)
     1: Helmet_ON (헬멧 착용)
-    2: Vest_OFF (안전조끼 미착용)
-    3: Vest_ON (안전조끼 착용)
-    4: fire (화재/불꽃)
-    5: smoke (연기)
-    6: fall (쓰러짐/넘어짐)
+    2: fire (화재/불꽃)
+    3: smoke (연기)
+    4: fall (쓰러짐/넘어짐)
+    5: person (사람)
 """
 
 import argparse
@@ -26,14 +25,14 @@ def parse_args():
     parser = argparse.ArgumentParser(description="PPE + Fire + Fall Unified YOLOE Training")
 
     # 모델 설정 (n, s, m, l, x)
-    parser.add_argument("--model", type=str, default="yoloe-26m",
+    parser.add_argument("--model", type=str, default="yoloe-26l",
                         help="모델 크기 (yoloe-26n, yoloe-26s, yoloe-26m, yoloe-26l, yoloe-26x)")
-    parser.add_argument("--data", type=str, default="dataset/unified_all/data.yaml",
+    parser.add_argument("--data", type=str, default="dataset/unified_no_vest/data.yaml",
                         help="데이터셋 yaml 경로")
 
     # 학습 설정
     parser.add_argument("--epochs", type=int, default=100, help="학습 에폭 수")
-    parser.add_argument("--batch", type=int, default=16, help="배치 크기")
+    parser.add_argument("--batch", type=int, default=32, help="배치 크기")
     parser.add_argument("--imgsz", type=int, default=640, help="이미지 크기")
     parser.add_argument("--device", type=int, default=0, help="GPU 디바이스")
 
@@ -50,9 +49,9 @@ def parse_args():
 def train(args):
     """모델 학습"""
     print("="*60)
-    print("PPE + Fire + Fall Unified Detection Training (YOLOE)")
+    print("Helmet + Fire + Fall Unified Detection Training (YOLOE)")
     print("="*60)
-    print("클래스: Helmet_OFF, Helmet_ON, Vest_OFF, Vest_ON, fire, smoke, fall")
+    print("클래스: Helmet_OFF, Helmet_ON, fire, smoke, fall, person")
     print("="*60)
 
     BASE_PATH = Path(__file__).parent
